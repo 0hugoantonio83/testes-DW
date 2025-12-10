@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechSync - Relatórios</title>
+  <link rel="icon" href="imagem/logo.png">
+  <style>
+    :root {
+        --cor-principal: #6a61ff; 
+        --cor-fundo-card: #20202a;
+        --cor-fundo-sidebar: #272734;
+        --cor-texto-primario: #e1e1e6;
+        --cor-texto-secundario: #dbdbe8;
+        --cor-destaque: #ff79c6;
+        --cor-borda: #383842;
+        --status-online: #50fa7b;
+        --status-offline: #ff5555;
+        --sombra: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #121214 url("imagem/fundo_roxo.png") no-repeat center center/cover; 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: var(--cor-texto-primario); height: 100vh;
+      display: flex; flex-direction: column; overflow: hidden; 
+    }
+    .dashboard { display: flex; height: 100vh; width: 100%; }
+    .sidebar {
+        width: 220px; background: var(--cor-fundo-sidebar); padding: 20px;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.2); border-right: 1px solid var(--cor-borda);
+        transition: all 0.3s ease; overflow: hidden; white-space: nowrap;
+    }
+    .dashboard.sidebar-toggled .sidebar { width: 0; min-width: 0; padding: 0; }
+    .sidebar h2 { 
+      font-size: 40px; text-align: center; margin-bottom: 20px; color: var(--cor-principal);
+      text-shadow: 0 0 10px rgba(106, 97, 255, 0.3);
+    }
+    .sidebar img { width: 100px; display: block; margin: 0 auto 20px; }
+    .sidebar ul { list-style: none; }
+    .sidebar li { margin: 15px 0; font-size: 20px; }
+    .sidebar a { color: var(--cor-texto-secundario); text-decoration: none; font-weight: 500; transition: color 0.3s; }
+    .sidebar a:hover, .sidebar a.active { color: var(--cor-destaque); text-shadow: 0 0 7px var(--cor-destaque);}
+    .sidebar a.active { font-weight: 700; }
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .header {
+      background-color: rgba(39, 39, 52, 0.95); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--cor-borda); flex-shrink: 0;
+    }
+    .header-group { display: flex; align-items: center; gap: 15px;}
+    .content { padding: 30px; flex: 1; overflow-y: auto; overflow-x: hidden; }
+    .btn {
+        padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: 600; transition: 0.3s; cursor: pointer; border: none; font-family: inherit;
+    }
+    .btn-principal { background: var(--cor-principal); color: #fff; }
+    .btn-principal:hover { background: var(--cor-destaque); transform: translateY(-2px); }
+    .btn-toggle {
+        background: none; border: none; color: var(--cor-texto-primario); font-size: 24px; cursor: pointer; margin-right: 10px; transition: color 0.3s;
+    }
+    .btn-toggle:hover { color: var(--cor-destaque); }
+    .card-container {
+        background: var(--cor-fundo-card); padding: 20px; border-radius: 8px; margin-bottom: 25px; box-shadow: var(--sombra); border: 1px solid var(--cor-borda); break-inside: avoid;
+    }
+    .card-container h3 { 
+        margin-bottom: 15px; color: var(--cor-destaque); font-size: 1.2rem; border-bottom: 1px solid var(--cor-borda); padding-bottom: 10px;
+    }
+    .grid-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+    .metric-item { display: flex; flex-direction: column; justify-content: center; text-align: center; height: 170px; }
+    .metric-item h4 { font-size: 0.9rem; color: var(--cor-texto-secundario); margin-bottom: 10px; }
+    .grid-graphs { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+    .full-width { grid-column: 1 / -1; }
+    .iframe-box { width: 100%; height: 300px; border-radius: 4px; overflow: hidden; background: #18181b; }
+    iframe { width: 100%; height: 100%; border: 0; }
+    .filters { display: flex; border: 1px solid var(--cor-borda); border-radius: 5px; overflow: hidden; }
+    .btn-filter {
+        background: var(--cor-fundo-card); color: var(--cor-texto-secundario); padding: 8px 16px; border: none; cursor: pointer; border-right: 1px solid var(--cor-borda); font-weight: 500;
+    }
+    .btn-filter:last-child { border-right: none; }
+    .btn-filter:hover { background: #383842; color: #fff; }
+    .btn-filter.active { background: var(--cor-principal); color: #fff; }
+    @media (max-width: 1024px) {
+        .grid-graphs, .grid-metrics { grid-template-columns: 1fr; }
+    }
+    @media print {
+        .sidebar, .btn-toggle, .filters, #btnPDF, .user-display { display: none !important; }
+        body, .dashboard, .main, .content {
+            background: #121214 !important; color: #e1e1e6 !important; display: block !important; height: auto !important; width: 100% !important; margin: 0; padding: 0;
+        }
+        .header { background: none !important; border: none !important; justify-content: center; }
+        .card-container, .iframe-box {
+            background: #20202a !important; border: 1px solid #383842 !important; box-shadow: none !important;
+        }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard" id="dashboard">
+    <aside class="sidebar">
+      <a href="index.html" id="logoutLink" style="text-decoration:none; display:block;">
+        <img src="imagem/logo.png" alt="TechSync">
+        <h2>TechSync</h2>
+      </a>  
+      <ul>
+        <li><a href="dashboard.html">Dashboard</a></li>
+        <li><a href="Dispositivos.html">Dispositivos</a></li>
+        <li><a href="#" class="active">Relatórios</a></li>
+        <li><a href="configuracao.html">Configurações</a></li>
+      </ul>
+    </aside>
+    <main class="main">
+      <header class="header">
+        <div class="header-group">
+          <button class="btn-toggle" id="toggleBtn">☰</button>
+          <div>
+              <h3 style="margin: 0; font-size: 1.5rem;">Relatórios de Performance</h3>
+              <small style="color: var(--cor-texto-secundario);">Período: <span id="lblPeriodo">30 dias</span></small>
+          </div>
+        </div>
+        <div class="header-group">
+            <div class="filters">
+                <button class="btn-filter" data-range="now-24h">24h</button>
+                <button class="btn-filter" data-range="now-7d">7 Dias</button>
+                <button class="btn-filter active" data-range="now-30d">30 Dias</button>
+            </div>
+            <button class="btn btn-principal" id="btnPDF">🖨️ PDF</button>
+            <div class="user-display" style="font-weight: 600;">👤 <span id="userName">Admin</span></div>
+        </div>
+      </header>
+      <div class="content">
+        <div class="grid-metrics">
+          <div class="card-container metric-item">
+            <h4>Disponibilidade (SLA)</h4>
+            <iframe src="http://192.168.56.102:3000/d-solo/adtrlgh/sla-zabbix?orgId=1&theme=dark&panelId=panel-1&__feature.dashboardSceneSolo=true&kiosk&from=now-30d&to=now" style="pointer-events: none;"></iframe>
+          </div>
+          <div class="card-container metric-item">
+            <h4>Total de Incidentes</h4>
+            <iframe src="http://192.168.56.102:3000/d-solo/adxmq9n/count-problems?orgId=1&theme=dark&panelId=panel-1&__feature.dashboardSceneSolo=true&kiosk&from=now-30d&to=now" style="pointer-events: none;"></iframe>
+          </div>
+          <div class="card-container metric-item">
+            <h4>Tráfego Total</h4>
+            <iframe src="http://192.168.56.102:3000/d-solo/adl7pm4/taxa-de-download?orgId=1&theme=dark&panelId=panel-1&__feature.dashboardSceneSolo=true&kiosk&from=now-30d&to=now" style="pointer-events: none;"></iframe>
+          </div>
+          <div class="card-container metric-item">
+            <h4>Uptime Médio</h4>
+            <iframe src="http://192.168.56.102:3000/d-solo/adc8mdx/up-time?orgId=1&panelId=panel-1&__feature.dashboardSceneSolo=true"></iframe>
+          </div>
+        </div>
+        <div class="grid-graphs">
+            <div class="card-container">
+                <h3>Tendência de Disponibilidade</h3>
+                <div class="iframe-box">
+                    <iframe src="http://192.168.56.102:3000/d-solo/ad28q68/sla-mensal?orgId=1&theme=dark&panelId=1&kiosk&from=now-30d&to=now"></iframe>
+                </div>
+            </div>
+            <div class="card-container">
+                <h3>Top Alertas</h3>
+                <div class="iframe-box">
+                    <iframe src="http://192.168.56.102:3000/d-solo/ad84kr5/problemas-recentes?orgId=1&theme=dark&panelId=panel-1&__feature.dashboardSceneSolo=true&kiosk&from=now-30d&to=now&refresh=1m"></iframe>
+                </div>
+            </div>
+            <div class="card-container full-width">
+                <h3>Histórico de Rede</h3>
+                <div class="iframe-box">
+                    <iframe src="http://192.168.56.102:3000/d-solo/adqjrmm/uso-de-rede?orgId=1&theme=dark&panelId=1&kiosk&from=now-30d&to=now"></iframe>
+                </div>
+            </div>
+        </div>
+        <div class="card-container">
+            <h3>Histórico de Ocorrências</h3>
+            <div class="iframe-box" style="height: 400px;">
+                <iframe src="http://192.168.56.102:3000/d-solo/advz6tg/histrico-de-problemas?orgId=1&theme=dark&panelId=panel-1&__feature.dashboardSceneSolo=true&kiosk&from=now-30d&to=now&refresh=1m"></iframe>
+            </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script type="module">
+    // Filtros
+    const btns = document.querySelectorAll('.btn-filter');
+    const label = document.getElementById('lblPeriodo');
+    const frames = document.querySelectorAll('iframe'); 
+    btns.forEach(btn => {
+        btn.onclick = () => {
+            btns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            label.textContent = btn.textContent;
+            
+            const range = btn.dataset.range;
+            frames.forEach(f => {
+                let url = new URL(f.src);
+                url.searchParams.set('from', range);
+                f.src = url.toString();
+            });
+        };
+    });
+    // Ações Gerais
+    document.getElementById('btnPDF').onclick = () => window.print();
+    document.getElementById('toggleBtn').onclick = () => document.getElementById('dashboard').classList.toggle('sidebar-toggled');
+    document.getElementById('logoutLink').onclick = () => localStorage.removeItem('usuarioLogadoNome');
+    const user = localStorage.getItem('usuarioLogadoNome');
+    document.getElementById('userName').textContent = user ? (user.charAt(0).toUpperCase() + user.slice(1)) : 'Admin';
+  </script>
+</body>
+</html>
