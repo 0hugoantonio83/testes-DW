@@ -18,7 +18,25 @@ export class Model {
     }
 
     saveDb(data) {
+        // 1. Salva no LocalStorage (para acesso imediato e offline)
         localStorage.setItem('techsync_db', JSON.stringify(data));
+
+        // 2. Tenta salvar no arquivo físico (seeders.js) através do nosso servidor
+        fetch('http://localhost:3000/api/save-seeders', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (response.ok) console.log("Backup salvo em seeders.js");
+            else console.warn("Erro ao salvar no disco.");
+        })
+        .catch(error => {
+            // Se o servidor estiver desligado, não quebra o site, apenas avisa
+            console.warn("Servidor offline. Dados salvos apenas no navegador.");
+        });
     }
 
     getAll() {
